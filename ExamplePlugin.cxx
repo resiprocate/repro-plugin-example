@@ -1,16 +1,19 @@
 
 #include "rutil/Logger.hxx"
+#include "resip/stack/Helper.hxx"
 #include "repro/Plugin.hxx"
+#include "repro/Processor.hxx"
+#include "repro/RequestContext.hxx"
 
 #define RESIPROCATE_SUBSYSTEM resip::Subsystem::REPRO
 
 using namespace resip;
 using namespace repro;
 
-class ExamplePlugin : public Plugin
+class ExamplePlugin : public Plugin, public Processor
 {
    public:
-      ExamplePlugin(){};
+      ExamplePlugin()  : Processor("Example") {};
       ~ExamplePlugin(){};
 
       virtual bool init(ProxyConfig *proxyConfig)
@@ -22,6 +25,12 @@ class ExamplePlugin : public Plugin
       virtual void onRequestProcessorChainPopulated(ProcessorChain& chain)
       {
          DebugLog(<<"ExamplePlugin: onRequestProcessorChainPopulated called");
+
+         // The module class is also the monkey class, no need to create
+         // any monkey instance here, just add ourself to the chain
+
+         // Add the example monkey to the chain
+         chain.addProcessor(std::auto_ptr<Processor>(this));
       }
 
       virtual void onResponseProcessorChainPopulated(ProcessorChain& chain)
@@ -33,6 +42,29 @@ class ExamplePlugin : public Plugin
       {
          DebugLog(<<"ExamplePlugin: onTargetProcessorChainPopulated called");
       }
+
+      /*
+       * Now we implement the Processor API from repro/Processor.hxx
+       * We are called from the request processor chain, that makes
+       * this class a monkey in the reSIProcate/repro terminology
+       */
+
+      virtual processor_action_t process(RequestContext &context)
+      {
+         DebugLog(<< "Monkey handling request: ExamplePlugin");
+
+         SipMessage& msg = context.getOriginalRequest();
+
+         // Barf if the SIP message uses the MESSAGE method
+         if(msg.method() == MESSAGE)
+         {
+            context.sendResponse(*std::auto_ptr<SipMessage>
+               (Helper::makeResponse(msg, 500, "Internal error")));
+            return SkipAllChains;
+         }
+         return Processor::Continue;
+      }
+
 };
 
 
