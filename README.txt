@@ -23,4 +23,5 @@ Using this as a skeleton for building your own plugin module project:
   Now insert your own code in the SomethingPlugin::process(...) method
 
 
+Copyright (C) 2013 Daniel Pocock http://danielpocock.com
 
