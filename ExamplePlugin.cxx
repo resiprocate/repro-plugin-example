@@ -16,7 +16,7 @@ class ExamplePlugin : public Plugin, public Processor
       ExamplePlugin()  : Processor("Example") {};
       ~ExamplePlugin(){};
 
-      virtual bool init(ProxyConfig *proxyConfig)
+      virtual bool init(SipStack& sipStack, ProxyConfig *proxyConfig)
       {
           DebugLog(<<"ExamplePlugin: init called");
           return true;
